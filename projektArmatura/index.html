@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelář Armaturních Skupin, Nádrží a Zdrojů Tepla</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Náhled při přetahování -->
+    <div id="drag-ghost"></div>
+
+    <!-- LEVÝ PANEL: PALETA -->
+    <div id="palette">
+        <h2 data-i18n="library_title">Knihovna Prvků</h2>
+        <input type="text" class="search-box" id="search-input" placeholder="Hledat..." data-i18n-ph="search_placeholder" oninput="filterPalette()">
+
+        <!-- POZNÁMKY A POPISKY -->
+        <div class="palette-category" data-cat="notes">
+            <h2 data-i18n="cat_notes">Poznámky & Popisky</h2>
+            <div class="palette-item" data-type="note-block" onmousedown="startPaletteDrag(event, 'note-block')" onclick="addComponentFromPalette('note-block')">
+                <svg viewBox="-40 -35 80 70">
+                    <rect x="-25" y="-18" width="50" height="36" fill="#2d2b1e" stroke="#f39c12" stroke-width="2" rx="3" stroke-dasharray="3"/>
+                    <text x="0" y="-3" fill="#f39c12" font-size="8" font-weight="bold" text-anchor="middle" data-i18n="note_badge">POZNÁMKA</text>
+                    <text x="0" y="8" fill="#aaa" font-size="7" text-anchor="middle" data-i18n="note_sub">Textový štítek</text>
+                </svg>
+                <span data-i18n="comp_note_block">Blok poznámky (Text)</span>
+            </div>
+        </div>
+
+        <!-- NÁDRŽE & ZÁSOBNÍKY -->
+        <div class="palette-category" data-cat="tanks">
+            <h2 data-i18n="cat_tanks">Nádoby & Zásobníky</h2>
+            <div class="palette-item" data-type="buffer-tank" onmousedown="startPaletteDrag(event, 'buffer-tank')" onclick="addComponentFromPalette('buffer-tank')">
+                <svg viewBox="-40 -40 80 80"><rect x="-25" y="-35" width="50" height="70" rx="10" fill="#21212b" stroke="#00adb5" stroke-width="2"/><text x="0" y="-5" fill="#00adb5" font-size="9" font-weight="bold" text-anchor="middle">AKU</text><text x="0" y="10" fill="#aaa" font-size="8" text-anchor="middle">500 L</text></svg>
+                <span data-i18n="comp_buffer_tank">Akumulační nádrž (Regulus)</span>
+            </div>
+            <div class="palette-item" data-type="dhw-tank" onmousedown="startPaletteDrag(event, 'dhw-tank')" onclick="addComponentFromPalette('dhw-tank')">
+                <svg viewBox="-40 -40 80 80"><rect x="-25" y="-35" width="50" height="70" rx="10" fill="#21212b" stroke="#f39c12" stroke-width="2"/><path d="M-12,-10 C-12,-18 12,-18 12,-10 C12,-2 -12,-2 -12,6 C-12,14 12,14 12,22" stroke="#f39c12" stroke-width="2" fill="none"/><text x="0" y="3" fill="#fff" font-size="8" font-weight="bold" text-anchor="middle">TUV</text></svg>
+                <span data-i18n="comp_dhw_tank">Zásobník TUV (s výměníkem)</span>
+            </div>
+            <div class="palette-item" data-type="expansion-vessel" onmousedown="startPaletteDrag(event, 'expansion-vessel')" onclick="addComponentFromPalette('expansion-vessel')">
+                <svg viewBox="-40 -40 80 80"><path d="M0,25 L0,15" stroke="#fff" stroke-width="2"/><ellipse cx="0" cy="-2" rx="18" ry="18" fill="#1e1e24" stroke="#e63946" stroke-width="2"/><line x1="-18" y1="-2" x2="18" y2="-2" stroke="#e63946" stroke-width="1.5" stroke-dasharray="3"/></svg>
+                <span data-i18n="comp_expansion_vessel">Expanzní nádoba</span>
+            </div>
+            <div class="palette-item" data-type="anuloid" onmousedown="startPaletteDrag(event, 'anuloid')" onclick="addComponentFromPalette('anuloid')">
+                <svg viewBox="-40 -40 80 80"><rect x="-15" y="-30" width="30" height="60" rx="5" fill="#21212b" stroke="#00adb5" stroke-width="2"/><text x="0" y="3" fill="#00adb5" font-size="8" font-weight="bold" text-anchor="middle">HVDT</text></svg>
+                <span data-i18n="comp_anuloid">Anuloid / HVDT</span>
+            </div>
+        </div>
+
+        <!-- ZDROJE TEPLA A VODÁRNY -->
+        <div class="palette-category" data-cat="sources">
+            <h2 data-i18n="cat_sources">Zdroje Tepla & Vodárny</h2>
+            <div class="palette-item" data-type="fireplace-boiler" onmousedown="startPaletteDrag(event, 'fireplace-boiler')" onclick="addComponentFromPalette('fireplace-boiler')">
+                <svg viewBox="-40 -40 80 80"><rect x="-30" y="-30" width="60" height="60" fill="#21212b" stroke="#e63946" stroke-width="2" rx="4"/><path d="M0,10 C-10,0 -5,-15 0,-20 C5,-15 10,0 0,10 Z" fill="#e63946"/><text x="0" y="22" fill="#fff" font-size="8" text-anchor="middle">Krb (8kW)</text></svg>
+                <span data-i18n="comp_fireplace">Krbová vložka s výměníkem</span>
+            </div>
+            <div class="palette-item" data-type="heat-pump" onmousedown="startPaletteDrag(event, 'heat-pump')" onclick="addComponentFromPalette('heat-pump')">
+                <svg viewBox="-40 -40 80 80"><rect x="-30" y="-30" width="60" height="60" fill="#21212b" stroke="#00adb5" stroke-width="2" rx="4"/><circle cx="0" cy="-5" r="14" fill="none" stroke="#00adb5" stroke-width="2"/><path d="M-8,-5 L8,-5 M0,-13 L0,3" stroke="#00adb5" stroke-width="2"/><text x="0" y="22" fill="#fff" font-size="8" text-anchor="middle">TČ (6kW)</text></svg>
+                <span data-i18n="comp_heat_pump">Tepelné čerpadlo</span>
+            </div>
+            <div class="palette-item" data-type="solar-collector" onmousedown="startPaletteDrag(event, 'solar-collector')" onclick="addComponentFromPalette('solar-collector')">
+                <svg viewBox="-40 -40 80 80"><rect x="-30" y="-20" width="60" height="40" fill="#21212b" stroke="#f39c12" stroke-width="2" rx="2"/><line x1="-30" y1="-5" x2="30" y2="-5" stroke="#f39c12"/><line x1="-30" y1="10" x2="30" y2="10" stroke="#f39c12"/><line x1="-10" y1="-20" x2="-10" y2="20" stroke="#f39c12"/><line x1="10" y1="-20" x2="10" y2="20" stroke="#f39c12"/><text x="0" y="28" fill="#fff" font-size="8" text-anchor="middle">Solár</text></svg>
+                <span data-i18n="comp_solar">Solární kolektor</span>
+            </div>
+            <div class="palette-item" data-type="electric-boiler" onmousedown="startPaletteDrag(event, 'electric-boiler')" onclick="addComponentFromPalette('electric-boiler')">
+                <svg viewBox="-40 -40 80 80"><rect x="-25" y="-30" width="50" height="60" fill="#21212b" stroke="#f39c12" stroke-width="2" rx="4"/><path d="M-10,-10 L-5,-5 L0,-15 L5,-5 L10,-10" stroke="#f39c12" stroke-width="2" fill="none"/><text x="0" y="18" fill="#fff" font-size="8" text-anchor="middle">El. kotel</text></svg>
+                <span data-i18n="comp_electric_boiler">Elektrokotel</span>
+            </div>
+            <div class="palette-item" data-type="gas-boiler" onmousedown="startPaletteDrag(event, 'gas-boiler')" onclick="addComponentFromPalette('gas-boiler')">
+                <svg viewBox="-40 -40 80 80"><rect x="-25" y="-30" width="50" height="60" fill="#21212b" stroke="#2a9d8f" stroke-width="2" rx="4"/><circle cx="0" cy="-5" r="8" fill="#2a9d8f"/><text x="0" y="18" fill="#fff" font-size="8" text-anchor="middle">Plyn. kotel</text></svg>
+                <span data-i18n="comp_gas_boiler">Plynový kondenzační kotel</span>
+            </div>
+            <div class="palette-item" data-type="pellet-boiler" onmousedown="startPaletteDrag(event, 'pellet-boiler')" onclick="addComponentFromPalette('pellet-boiler')">
+                <svg viewBox="-40 -40 80 80"><rect x="-30" y="-30" width="60" height="60" fill="#21212b" stroke="#d4a373" stroke-width="2" rx="4"/><path d="M-12,-15 L12,-15 L6,5 L-6,5 Z" fill="#d4a373"/><text x="0" y="20" fill="#fff" font-size="8" text-anchor="middle">Kotel pelety</text></svg>
+                <span data-i18n="comp_pellet_boiler">Kotel na pelety / dřevo</span>
+            </div>
+            <div class="palette-item" data-type="waterworks-classic" onmousedown="startPaletteDrag(event, 'waterworks-classic')" onclick="addComponentFromPalette('waterworks-classic')">
+                <svg viewBox="-40 -35 80 70">
+                    <rect x="-20" y="-15" width="40" height="30" fill="#21212b" stroke="#00adb5" stroke-width="2" rx="3"/>
+                    <ellipse cx="0" cy="-15" rx="12" ry="8" fill="#21212b" stroke="#e63946" stroke-width="1.5"/>
+                    <text x="0" y="5" fill="#fff" font-size="8" font-weight="bold" text-anchor="middle">VODÁRNA</text>
+                </svg>
+                <span data-i18n="comp_waterworks_classic">Klasická domácí vodárna</span>
+            </div>
+            <div class="palette-item" data-type="waterworks-inverter" onmousedown="startPaletteDrag(event, 'waterworks-inverter')" onclick="addComponentFromPalette('waterworks-inverter')">
+                <svg viewBox="-40 -35 80 70">
+                    <rect x="-18" y="-20" width="36" height="40" fill="#21212b" stroke="#00adb5" stroke-width="2" rx="3"/>
+                    <path d="M-10,-5 L0,5 L10,-5" stroke="#00adb5" stroke-width="2" fill="none"/>
+                    <text x="0" y="14" fill="#fff" font-size="7" text-anchor="middle">INVERTOR</text>
+                </svg>
+                <span data-i18n="comp_waterworks_inverter">Kompaktní / Invertorová vodárna</span>
+            </div>
+            <div class="palette-item" data-type="submersible-pump" onmousedown="startPaletteDrag(event, 'submersible-pump')" onclick="addComponentFromPalette('submersible-pump')">
+                <svg viewBox="-40 -35 80 70">
+                    <rect x="-10" y="-25" width="20" height="50" fill="#21212b" stroke="#00adb5" stroke-width="2" rx="3"/>
+                    <line x1="-10" y1="-10" x2="10" y2="-10" stroke="#00adb5"/>
+                    <text x="0" y="5" fill="#fff" font-size="7" text-anchor="middle">VRT</text>
+                </svg>
+                <span data-i18n="comp_submersible_pump">Ponorné čerpadlo do vrtu</span>
+            </div>
+        </div>
+
+        <!-- ČERPADLA -->
+        <div class="palette-category" data-cat="pumps">
+            <h2 data-i18n="cat_pumps">Čerpadla</h2>
+            <div class="palette-item" data-type="pump" onmousedown="startPaletteDrag(event, 'pump')" onclick="addComponentFromPalette('pump')">
+                <svg viewBox="-40 -35 80 70"><path d="M-30,0 L30,0" stroke="#fff" stroke-width="3" fill="none"/><circle cx="0" cy="0" r="14" fill="#1e1e24" stroke="#fff" stroke-width="2"/><polygon points="-6,-8 -6,8 8,0" fill="#fff"/></svg>
+                <span data-i18n="comp_pump">Oběhové čerpadlo topení</span>
+            </div>
+            <div class="palette-item" data-type="dhw-recirc-pump" onmousedown="startPaletteDrag(event, 'dhw-recirc-pump')" onclick="addComponentFromPalette('dhw-recirc-pump')">
+                <svg viewBox="-40 -35 80 70"><path d="M-30,0 L30,0" stroke="#fff" stroke-width="3" fill="none"/><circle cx="0" cy="0" r="14" fill="#1e1e24" stroke="#f39c12" stroke-width="2"/><polygon points="-6,-8 -6,8 8,0" fill="#f39c12"/></svg>
+                <span data-i18n="comp_dhw_recirc">Cirkulační čerpadlo TUV</span>
+            </div>
+        </div>
+
+        <!-- MĚŘICÍ PRŘÍSTROJE & SENZORY -->
+        <div class="palette-category" data-cat="sensors">
+            <h2 data-i18n="cat_sensors">Měřicí Přístroje & Senzory</h2>
+            <div class="palette-item" data-type="water-meter" onmousedown="startPaletteDrag(event, 'water-meter')" onclick="addComponentFromPalette('water-meter')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M-30,0 L30,0" stroke="#00adb5" stroke-width="3"/>
+                    <circle cx="0" cy="0" r="12" fill="#21212b" stroke="#00adb5" stroke-width="2"/>
+                    <text x="0" y="3" fill="#fff" font-size="8" font-weight="bold" text-anchor="middle">m³</text>
+                </svg>
+                <span data-i18n="comp_water_meter">Vodoměr</span>
+            </div>
+            <div class="palette-item" data-type="flow-meter" onmousedown="startPaletteDrag(event, 'flow-meter')" onclick="addComponentFromPalette('flow-meter')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M-30,0 L30,0" stroke="#fff" stroke-width="3"/>
+                    <rect x="-10" y="-12" width="20" height="24" fill="#21212b" stroke="#00adb5" stroke-width="2" rx="2"/>
+                    <text x="0" y="3" fill="#00adb5" font-size="8" font-weight="bold" text-anchor="middle">L/m</text>
+                </svg>
+                <span data-i18n="comp_flow_meter">Měření průtoku vody</span>
+            </div>
+            <div class="palette-item" data-type="pressure-gauge" onmousedown="startPaletteDrag(event, 'pressure-gauge')" onclick="addComponentFromPalette('pressure-gauge')">
+                <svg viewBox="-40 -35 80 70">
+                    <line x1="0" y1="20" x2="0" y2="0" stroke="#fff" stroke-width="3"/>
+                    <circle cx="0" cy="-8" r="14" fill="#21212b" stroke="#00adb5" stroke-width="2"/>
+                    <line x1="0" y1="-8" x2="6" y2="-14" stroke="#e63946" stroke-width="2"/>
+                    <text x="0" y="2" fill="#aaa" font-size="7" text-anchor="middle">BAR</text>
+                </svg>
+                <span data-i18n="comp_pressure_gauge">Manometr jímkový</span>
+            </div>
+            <div class="palette-item" data-type="thermometer-immersion" onmousedown="startPaletteDrag(event, 'thermometer-immersion')" onclick="addComponentFromPalette('thermometer-immersion')">
+                <svg viewBox="-40 -35 80 70">
+                    <line x1="0" y1="20" x2="0" y2="0" stroke="#fff" stroke-width="3"/>
+                    <circle cx="0" cy="-8" r="14" fill="#21212b" stroke="#e63946" stroke-width="2"/>
+                    <text x="0" y="-5" fill="#e63946" font-size="10" font-weight="bold" text-anchor="middle">°C</text>
+                </svg>
+                <span data-i18n="comp_thermometer_immersion">Teploměr jímkový</span>
+            </div>
+            <div class="palette-item" data-type="thermometer-surface" onmousedown="startPaletteDrag(event, 'thermometer-surface')" onclick="addComponentFromPalette('thermometer-surface')">
+                <svg viewBox="-40 -35 80 70">
+                    <rect x="-12" y="-12" width="24" height="24" fill="#21212b" stroke="#e63946" stroke-width="2" rx="3"/>
+                    <text x="0" y="4" fill="#e63946" font-size="9" font-weight="bold" text-anchor="middle">°C</text>
+                </svg>
+                <span data-i18n="comp_thermometer_surface">Teploměr příložný</span>
+            </div>
+        </div>
+
+        <!-- VENTILY & REGULACE -->
+        <div class="palette-category" data-cat="valves">
+            <h2 data-i18n="cat_valves">Ventily, Směšovače & Regulace</h2>
+            <div class="palette-item" data-type="pressure-reducer" onmousedown="startPaletteDrag(event, 'pressure-reducer')" onclick="addComponentFromPalette('pressure-reducer')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M-30,0 L30,0" stroke="#fff" stroke-width="3"/>
+                    <polygon points="-12,-10 -12,10 0,0" fill="#00adb5"/>
+                    <polygon points="12,-10 12,10 0,0" fill="#00adb5"/>
+                    <rect x="-6" y="-18" width="12" height="10" fill="#21212b" stroke="#00adb5" stroke-width="1.5"/>
+                </svg>
+                <span data-i18n="comp_pressure_reducer">Regulátor / Redukční ventil</span>
+            </div>
+            <div class="palette-item" data-type="thermostatic-switch-valve" onmousedown="startPaletteDrag(event, 'thermostatic-switch-valve')" onclick="addComponentFromPalette('thermostatic-switch-valve')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M-30,0 L30,0 M0,0 L0,25" stroke="#fff" stroke-width="3"/>
+                    <circle cx="0" cy="-12" r="8" fill="#f39c12" stroke="#fff" stroke-width="1"/>
+                    <text x="0" y="-9" fill="#1e1e24" font-size="8" font-weight="bold" text-anchor="middle">T</text>
+                </svg>
+                <span data-i18n="comp_thermostatic_switch">Přepínací termostatický ventil</span>
+            </div>
+            <div class="palette-item" data-type="balancing-valve" onmousedown="startPaletteDrag(event, 'balancing-valve')" onclick="addComponentFromPalette('balancing-valve')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M-30,0 L30,0" stroke="#fff" stroke-width="3"/>
+                    <polygon points="-12,-8 -12,8 0,0" fill="#fff"/>
+                    <polygon points="12,-8 12,8 0,0" fill="#fff"/>
+                    <line x1="0" y1="0" x2="0" y2="-14" stroke="#00adb5" stroke-width="2"/>
+                    <circle cx="0" cy="-16" r="4" fill="#00adb5"/>
+                </svg>
+                <span data-i18n="comp_balancing_valve">Regulační / Vyvažovací ventil</span>
+            </div>
+            <div class="palette-item" data-type="differential-bypass-valve" onmousedown="startPaletteDrag(event, 'differential-bypass-valve')" onclick="addComponentFromPalette('differential-bypass-valve')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M-25,0 L0,0 M0,0 L0,25" stroke="#fff" stroke-width="3"/>
+                    <polygon points="-12,-8 -12,8 0,0" fill="#e63946"/>
+                    <circle cx="0" cy="-12" r="6" fill="#21212b" stroke="#e63946" stroke-width="2"/>
+                </svg>
+                <span data-i18n="comp_differential_bypass">Diferenciální přepouštěcí ventil</span>
+            </div>
+            <div class="palette-item" data-type="ball-valve" onmousedown="startPaletteDrag(event, 'ball-valve')" onclick="addComponentFromPalette('ball-valve')">
+                <svg viewBox="-40 -35 80 70"><path d="M-30,0 L30,0" stroke="#fff" stroke-width="3" fill="none"/><polygon points="-16,-10 -16,10 0,0" fill="#fff"/><polygon points="16,-10 16,10 0,0" fill="#fff"/><line x1="0" y1="0" x2="0" y2="-14" stroke="#fff" stroke-width="2"/><line x1="-6" y1="-14" x2="6" y2="-14" stroke="#fff" stroke-width="2"/></svg>
+                <span data-i18n="comp_ball_valve">Kulový kohout ČSN</span>
+            </div>
+            <div class="palette-item" data-type="check-valve" onmousedown="startPaletteDrag(event, 'check-valve')" onclick="addComponentFromPalette('check-valve')">
+                <svg viewBox="-40 -35 80 70"><path d="M-30,0 L30,0" stroke="#fff" stroke-width="3" fill="none"/><polygon points="-12,-10 -12,10 6,0" fill="#fff"/><line x1="6" y1="-10" x2="6" y2="10" stroke="#fff" stroke-width="3"/></svg>
+                <span data-i18n="comp_check_valve">Zpětná klapka ČSN</span>
+            </div>
+            <div class="palette-item" data-type="motorized-2way-valve" onmousedown="startPaletteDrag(event, 'motorized-2way-valve')" onclick="addComponentFromPalette('motorized-2way-valve')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M-30,0 L30,0" stroke="#fff" stroke-width="3"/>
+                    <polygon points="-14,-8 -14,8 0,0" fill="#fff"/>
+                    <polygon points="14,-8 14,8 0,0" fill="#fff"/>
+                    <circle cx="0" cy="-14" r="7" fill="#21212b" stroke="#00adb5" stroke-width="2"/>
+                    <text x="0" y="-11" fill="#00adb5" font-size="8" font-weight="bold" text-anchor="middle">M</text>
+                </svg>
+                <span data-i18n="comp_motorized_2way">Motorizovaný 2-cestný ventil</span>
+            </div>
+            <div class="palette-item" data-type="3way-switching-valve" onmousedown="startPaletteDrag(event, '3way-switching-valve')" onclick="addComponentFromPalette('3way-switching-valve')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M-30,0 L30,0 M0,0 L0,25" stroke="#fff" stroke-width="3"/>
+                    <polygon points="-14,-8 -14,8 0,0" fill="#fff"/><polygon points="14,-8 14,8 0,0" fill="#fff"/><polygon points="-8,20 8,20 0,0" fill="#fff"/>
+                    <circle cx="0" cy="-14" r="7" fill="#21212b" stroke="#00adb5" stroke-width="2"/>
+                    <text x="0" y="-11" fill="#00adb5" font-size="8" font-weight="bold" text-anchor="middle">M</text>
+                </svg>
+                <span data-i18n="comp_3way_switching">3-cestný přepínací ventil</span>
+            </div>
+            <div class="palette-item" data-type="three-way-valve" onmousedown="startPaletteDrag(event, 'three-way-valve')" onclick="addComponentFromPalette('three-way-valve')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M-30,0 L30,0 M0,0 L0,25" stroke="#fff" stroke-width="3"/>
+                    <polygon points="-14,-8 -14,8 0,0" fill="#fff"/><polygon points="14,-8 14,8 0,0" fill="#fff"/><polygon points="-8,20 8,20 0,0" fill="#fff"/>
+                    <circle cx="0" cy="-14" r="7" fill="#f39c12"/>
+                </svg>
+                <span data-i18n="comp_three_way_manual">3-cestný směšovač (ruční)</span>
+            </div>
+            <div class="palette-item" data-type="motorized-3way-valve" onmousedown="startPaletteDrag(event, 'motorized-3way-valve')" onclick="addComponentFromPalette('motorized-3way-valve')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M-30,0 L30,0 M0,0 L0,25" stroke="#fff" stroke-width="3"/>
+                    <polygon points="-14,-8 -14,8 0,0" fill="#fff"/><polygon points="14,-8 14,8 0,0" fill="#fff"/><polygon points="-8,20 8,20 0,0" fill="#fff"/>
+                    <circle cx="0" cy="-14" r="7" fill="#21212b" stroke="#00adb5" stroke-width="2"/>
+                    <text x="0" y="-11" fill="#00adb5" font-size="8" font-weight="bold" text-anchor="middle">M</text>
+                </svg>
+                <span data-i18n="comp_motorized_3way">Motorizovaný 3-cestný směšovač</span>
+            </div>
+            <div class="palette-item" data-type="safety-valve" onmousedown="startPaletteDrag(event, 'safety-valve')" onclick="addComponentFromPalette('safety-valve')">
+                <svg viewBox="-40 -35 80 70"><path d="M-25,0 L0,0 M0,0 L0,25" stroke="#fff" stroke-width="3" fill="none"/><polygon points="-16,-8 -16,8 0,0" fill="#e63946"/><polygon points="-8,20 8,20 0,0" fill="#e63946"/><line x1="0" y1="0" x2="0" y2="-12" stroke="#fff" stroke-width="2"/><rect x="-6" y="-18" width="12" height="6" fill="#e63946" rx="1"/></svg>
+                <span data-i18n="comp_safety_valve">Pojistný / bezpečnostní ventil</span>
+            </div>
+        </div>
+
+        <!-- FILTRY & OCHRANA -->
+        <div class="palette-category" data-cat="filters">
+            <h2 data-i18n="cat_filters">Filtry, Ochrana & Odpad</h2>
+            <div class="palette-item" data-type="water-hammer-arrestor" onmousedown="startPaletteDrag(event, 'water-hammer-arrestor')" onclick="addComponentFromPalette('water-hammer-arrestor')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M0,20 L0,5" stroke="#fff" stroke-width="3"/>
+                    <rect x="-8" y="-20" width="16" height="25" fill="#21212b" stroke="#00adb5" stroke-width="2" rx="3"/>
+                    <line x1="-8" y1="-8" x2="8" y2="-8" stroke="#00adb5"/>
+                </svg>
+                <span data-i18n="comp_water_hammer">Kompenzátor hydraulického rázu</span>
+            </div>
+            <div class="palette-item" data-type="y-strainer" onmousedown="startPaletteDrag(event, 'y-strainer')" onclick="addComponentFromPalette('y-strainer')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M-30,0 L30,0 M0,0 L12,16" stroke="#fff" stroke-width="3"/>
+                    <rect x="6" y="10" width="12" height="12" fill="#f39c12" transform="rotate(45 12 16)"/>
+                </svg>
+                <span data-i18n="comp_y_strainer">Y-Filtr s čistícím sítem</span>
+            </div>
+            <div class="palette-item" data-type="dirt-separator" onmousedown="startPaletteDrag(event, 'dirt-separator')" onclick="addComponentFromPalette('dirt-separator')">
+                <svg viewBox="-40 -35 80 70"><path d="M-30,0 L30,0" stroke="#fff" stroke-width="3" fill="none"/><rect x="-10" y="-15" width="20" height="30" fill="#1e1e24" stroke="#00adb5" stroke-width="2" rx="3"/><circle cx="0" cy="0" r="4" fill="#e63946"/></svg>
+                <span data-i18n="comp_dirt_separator">Odkalovač / Magnetický separátor</span>
+            </div>
+            <div class="palette-item" data-type="auto-air-vent" onmousedown="startPaletteDrag(event, 'auto-air-vent')" onclick="addComponentFromPalette('auto-air-vent')">
+                <svg viewBox="-40 -35 80 70"><path d="M0,25 L0,5" stroke="#fff" stroke-width="3" fill="none"/><rect x="-10" y="-18" width="20" height="22" fill="#f39c12" rx="3"/><path d="M-4,-22 L0,-28 L4,-22" stroke="#00adb5" stroke-width="2" fill="none"/></svg>
+                <span data-i18n="comp_auto_air_vent">Automatický odvzdušňovací ventil</span>
+            </div>
+            <div class="palette-item" data-type="manual-air-vent" onmousedown="startPaletteDrag(event, 'manual-air-vent')" onclick="addComponentFromPalette('manual-air-vent')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M0,25 L0,5" stroke="#fff" stroke-width="3"/>
+                    <polygon points="-6,5 6,5 0,-5" fill="#fff"/>
+                    <line x1="-5" y1="-8" x2="5" y2="-8" stroke="#fff" stroke-width="2"/>
+                </svg>
+                <span data-i18n="comp_manual_air_vent">Manuální odvzdušňovač</span>
+            </div>
+            <div class="palette-item" data-type="dry-siphon" onmousedown="startPaletteDrag(event, 'dry-siphon')" onclick="addComponentFromPalette('dry-siphon')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M0,-25 L0,25" stroke="#6c757d" stroke-width="3"/>
+                    <rect x="-10" y="-10" width="20" height="20" fill="#21212b" stroke="#6c757d" stroke-width="2" rx="3"/>
+                    <circle cx="0" cy="0" r="4" fill="#e63946"/>
+                </svg>
+                <span data-i18n="comp_dry_siphon">Suchý sifon pro kondenzát</span>
+            </div>
+        </div>
+
+        <!-- ÚPRAVA A FILTRACE PITNÉ VODY -->
+        <div class="palette-category" data-cat="water-treatment">
+            <h2 data-i18n="cat_water_treatment">Úprava & Filtrace Vody</h2>
+            <div class="palette-item" data-type="water-filter" onmousedown="startPaletteDrag(event, 'water-filter')" onclick="addComponentFromPalette('water-filter')">
+                <svg viewBox="-40 -35 80 70">
+                    <rect x="-12" y="-12" width="24" height="30" fill="#21212b" stroke="#00adb5" stroke-width="2" rx="2"/>
+                    <rect x="-16" y="-20" width="32" height="10" fill="#00adb5" rx="2"/>
+                    <path d="M-28,-15 L-16,-15 M16,-15 L28,-15" stroke="#fff" stroke-width="3"/>
+                    <text x="0" y="8" fill="#00adb5" font-size="8" font-weight="bold" text-anchor="middle" data-i18n="badge_filter">FILTR</text>
+                </svg>
+                <span data-i18n="comp_water_filter">Jemný mechanický filtr</span>
+            </div>
+            <div class="palette-item" data-type="water-softener" onmousedown="startPaletteDrag(event, 'water-softener')" onclick="addComponentFromPalette('water-softener')">
+                <svg viewBox="-40 -35 80 70">
+                    <rect x="-20" y="-25" width="40" height="50" rx="4" fill="#21212b" stroke="#00adb5" stroke-width="2"/>
+                    <rect x="-15" y="-20" width="30" height="10" fill="#00adb5" rx="2"/>
+                    <circle cx="0" cy="5" r="8" fill="none" stroke="#fff" stroke-width="1.5"/>
+                    <text x="0" y="22" fill="#fff" font-size="7" font-weight="bold" text-anchor="middle" data-i18n="badge_softener">ZMĚKČOVAČ</text>
+                </svg>
+                <span data-i18n="comp_water_softener">Kabinetní změkčovač vody</span>
+            </div>
+            <div class="palette-item" data-type="reverse-osmosis" onmousedown="startPaletteDrag(event, 'reverse-osmosis')" onclick="addComponentFromPalette('reverse-osmosis')">
+                <svg viewBox="-40 -35 80 70">
+                    <rect x="-28" y="-15" width="12" height="30" fill="#21212b" stroke="#00adb5" stroke-width="1.5" rx="2"/>
+                    <rect x="-12" y="-15" width="12" height="30" fill="#21212b" stroke="#00adb5" stroke-width="1.5" rx="2"/>
+                    <rect x="4" y="-15" width="12" height="30" fill="#21212b" stroke="#00adb5" stroke-width="1.5" rx="2"/>
+                    <ellipse cx="24" cy="2" rx="10" ry="14" fill="#21212b" stroke="#fff" stroke-width="1.5"/>
+                    <text x="0" y="25" fill="#00adb5" font-size="8" font-weight="bold" text-anchor="middle">RO OSMÓZA</text>
+                </svg>
+                <span data-i18n="comp_reverse_osmosis">Reverzní osmóza s nádrží</span>
+            </div>
+            <div class="palette-item" data-type="uv-lamp" onmousedown="startPaletteDrag(event, 'uv-lamp')" onclick="addComponentFromPalette('uv-lamp')">
+                <svg viewBox="-40 -35 80 70">
+                    <rect x="-28" y="-8" width="56" height="16" fill="#21212b" stroke="#f39c12" stroke-width="2" rx="3"/>
+                    <line x1="-20" y1="0" x2="20" y2="0" stroke="#00adb5" stroke-width="3" stroke-dasharray="2"/>
+                    <text x="0" y="22" fill="#f39c12" font-size="8" font-weight="bold" text-anchor="middle">UV LAMPA</text>
+                </svg>
+                <span data-i18n="comp_uv_lamp">UV Sterilizační lampa</span>
+            </div>
+            <div class="palette-item" data-type="carbon-filter" onmousedown="startPaletteDrag(event, 'carbon-filter')" onclick="addComponentFromPalette('carbon-filter')">
+                <svg viewBox="-40 -35 80 70">
+                    <rect x="-15" y="-25" width="30" height="50" fill="#1e1e24" stroke="#aaa" stroke-width="2" rx="4"/>
+                    <text x="0" y="5" fill="#aaa" font-size="8" font-weight="bold" text-anchor="middle" data-i18n="badge_carbon">UHLÍK</text>
+                </svg>
+                <span data-i18n="comp_carbon_filter">Uhlíkový / Kolonový filtr</span>
+            </div>
+        </div>
+
+        <!-- OTOPNÁ TĚLESA KORADO -->
+        <div class="palette-category" data-cat="radiators">
+            <h2 data-i18n="cat_radiators">Otopná Tělesa Korado</h2>
+            <div class="palette-item" data-type="korado-radik" onmousedown="startPaletteDrag(event, 'korado-radik')" onclick="addComponentFromPalette('korado-radik')">
+                <svg viewBox="-40 -35 80 70">
+                    <rect x="-30" y="-18" width="60" height="36" fill="#21212b" stroke="#e63946" stroke-width="2" rx="2"/>
+                    <line x1="-20" y1="-18" x2="-20" y2="18" stroke="#e63946"/>
+                    <line x1="-10" y1="-18" x2="-10" y2="18" stroke="#e63946"/>
+                    <line x1="0" y1="-18" x2="0" y2="18" stroke="#e63946"/>
+                    <line x1="10" y1="-18" x2="10" y2="18" stroke="#e63946"/>
+                    <line x1="20" y1="-18" x2="20" y2="18" stroke="#e63946"/>
+                    <text x="0" y="28" fill="#fff" font-size="8" text-anchor="middle">Korado Radik</text>
+                </svg>
+                <span data-i18n="comp_korado_radik">Radiátor Korado Radik</span>
+            </div>
+            <div class="palette-item" data-type="korado-koralux" onmousedown="startPaletteDrag(event, 'korado-koralux')" onclick="addComponentFromPalette('korado-koralux')">
+                <svg viewBox="-40 -35 80 70">
+                    <rect x="-15" y="-25" width="30" height="50" fill="none" stroke="#f39c12" stroke-width="2"/>
+                    <line x1="-15" y1="-15" x2="15" y2="-15" stroke="#f39c12"/>
+                    <line x1="-15" y1="-5" x2="15" y2="-5" stroke="#f39c12"/>
+                    <line x1="-15" y1="5" x2="15" y2="5" stroke="#f39c12"/>
+                    <line x1="-15" y1="15" x2="15" y2="15" stroke="#f39c12"/>
+                    <text x="0" y="32" fill="#fff" font-size="8" text-anchor="middle">Žebřík Koralux</text>
+                </svg>
+                <span data-i18n="comp_korado_koralux">Topný žebřík Koralux</span>
+            </div>
+        </div>
+
+        <!-- ZDRAVOTNĚ TECHNICKÉ INSTALACE (ZTI) -->
+        <div class="palette-category" data-cat="sanitary">
+            <h2 data-i18n="cat_sanitary">Sanita & Vodovod (ZTI)</h2>
+            <div class="palette-item" data-type="water-inlet" onmousedown="startPaletteDrag(event, 'water-inlet')" onclick="addComponentFromPalette('water-inlet')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M-30,0 L30,0" stroke="#00adb5" stroke-width="3"/>
+                    <circle cx="0" cy="0" r="10" fill="#21212b" stroke="#00adb5" stroke-width="2"/>
+                    <text x="0" y="3" fill="#00adb5" font-size="7" font-weight="bold" text-anchor="middle">H2O</text>
+                </svg>
+                <span data-i18n="comp_water_inlet">Vstup pitné vody (Vodoměr)</span>
+            </div>
+            <div class="palette-item" data-type="sewage-outlet" onmousedown="startPaletteDrag(event, 'sewage-outlet')" onclick="addComponentFromPalette('sewage-outlet')">
+                <svg viewBox="-40 -35 80 70">
+                    <circle cx="0" cy="0" r="14" fill="#6c757d" stroke="#fff" stroke-width="2"/>
+                    <text x="0" y="3" fill="#fff" font-size="8" font-weight="bold" text-anchor="middle">DN110</text>
+                </svg>
+                <span data-i18n="comp_sewage_outlet">Napojení na kanalizaci</span>
+            </div>
+            <div class="palette-item" data-type="water-tap" onmousedown="startPaletteDrag(event, 'water-tap')" onclick="addComponentFromPalette('water-tap')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M-20,15 L-20,-5 C-20,-15 0,-15 0,-5 L0,5" stroke="#00adb5" stroke-width="3" fill="none"/>
+                    <polygon points="-5,5 5,5 0,12" fill="#00adb5"/>
+                </svg>
+                <span data-i18n="comp_water_tap">Vodovodní kohout / Baterie</span>
+            </div>
+            <div class="palette-item" data-type="wc-toilet" onmousedown="startPaletteDrag(event, 'wc-toilet')" onclick="addComponentFromPalette('wc-toilet')">
+                <svg viewBox="-40 -35 80 70">
+                    <rect x="-12" y="-20" width="24" height="15" fill="#21212b" stroke="#fff" stroke-width="2" rx="2"/>
+                    <ellipse cx="0" cy="5" rx="14" ry="12" fill="#21212b" stroke="#fff" stroke-width="2"/>
+                </svg>
+                <span data-i18n="comp_wc_toilet">Záchod / WC (Geberit)</span>
+            </div>
+            <div class="palette-item" data-type="washing-machine" onmousedown="startPaletteDrag(event, 'washing-machine')" onclick="addComponentFromPalette('washing-machine')">
+                <svg viewBox="-40 -35 80 70">
+                    <rect x="-20" y="-20" width="40" height="40" fill="#21212b" stroke="#fff" stroke-width="2" rx="3"/>
+                    <circle cx="0" cy="2" r="10" stroke="#00adb5" stroke-width="2" fill="none"/>
+                </svg>
+                <span data-i18n="comp_washing_machine">Pračka / Myčka</span>
+            </div>
+            <div class="palette-item" data-type="sink" onmousedown="startPaletteDrag(event, 'sink')" onclick="addComponentFromPalette('sink')">
+                <svg viewBox="-40 -35 80 70">
+                    <path d="M-20,-10 C-20,15 20,15 20,-10 Z" fill="#21212b" stroke="#fff" stroke-width="2"/>
+                </svg>
+                <span data-i18n="comp_sink">Umyvadlo / Dřez</span>
+            </div>
+        </div>
+
+        <!-- ROZVOD A VÝMĚNÍKY -->
+        <div class="palette-category" data-cat="distribution">
+            <h2 data-i18n="cat_distribution">Rozvod & Výměníky</h2>
+            <div class="palette-item" data-type="manifold" onmousedown="startPaletteDrag(event, 'manifold')" onclick="addComponentFromPalette('manifold')">
+                <svg viewBox="-40 -35 80 70"><rect x="-35" y="-12" width="70" height="8" fill="#e63946"/><rect x="-35" y="4" width="70" height="8" fill="#457b9d"/><circle cx="-25" cy="-8" r="3" fill="#fff"/><circle cx="0" cy="-8" r="3" fill="#fff"/><circle cx="25" cy="-8" r="3" fill="#fff"/></svg>
+                <span data-i18n="comp_manifold">Rozdělovač / Sběrač okruhů</span>
+            </div>
+            <div class="palette-item" data-type="plate-exchanger" onmousedown="startPaletteDrag(event, 'plate-exchanger')" onclick="addComponentFromPalette('plate-exchanger')">
+                <svg viewBox="-40 -35 80 70"><rect x="-20" y="-20" width="40" height="40" fill="#21212b" stroke="#fff" stroke-width="2" rx="2"/><path d="M-12,-12 L12,12 M-12,0 L0,12 M0,-12 L12,0" stroke="#00adb5" stroke-width="1.5"/></svg>
+                <span data-i18n="comp_plate_exchanger">Deskový výměník tepla</span>
+            </div>
+            <div class="palette-item" data-type="air-reheater" onmousedown="startPaletteDrag(event, 'air-reheater')" onclick="addComponentFromPalette('air-reheater')">
+                <svg viewBox="-40 -35 80 70"><rect x="-25" y="-15" width="50" height="30" fill="none" stroke="#fff" stroke-width="2"/><path d="M-20,-10 L-10,10 L0,-10 L10,10 L20,-10" stroke="#e63946" stroke-width="2" fill="none"/></svg>
+                <span data-i18n="comp_air_reheater">Teplovodní dohřev rekuperace</span>
+            </div>
+        </div>
+
+        <!-- TVAROVKY -->
+        <div class="palette-category" data-cat="fittings">
+            <h2 data-i18n="cat_fittings">Tvarovky Potrubí</h2>
+            <div class="palette-item" data-type="t-piece" onmousedown="startPaletteDrag(event, 't-piece')" onclick="addComponentFromPalette('t-piece')">
+                <svg viewBox="-40 -35 80 70"><path d="M-30,0 L30,0 M0,0 L0,25" stroke="#fff" stroke-width="3" fill="none"/></svg>
+                <span data-i18n="comp_t_piece">T-Kus</span>
+            </div>
+            <div class="palette-item" data-type="elbow-90" onmousedown="startPaletteDrag(event, 'elbow-90')" onclick="addComponentFromPalette('elbow-90')">
+                <svg viewBox="-40 -35 80 70"><path d="M-25,0 L0,0 L0,25" stroke="#fff" stroke-width="3" fill="none"/></svg>
+                <span data-i18n="comp_elbow_90">Koleno 90°</span>
+            </div>
+            <div class="palette-item" data-type="elbow-45" onmousedown="startPaletteDrag(event, 'elbow-45')" onclick="addComponentFromPalette('elbow-45')">
+                <svg viewBox="-40 -35 80 70"><path d="M-25,0 L0,0 L18,18" stroke="#fff" stroke-width="3" fill="none"/></svg>
+                <span data-i18n="comp_elbow_45">Koleno 45°</span>
+            </div>
+            <div class="palette-item" data-type="cross" onmousedown="startPaletteDrag(event, 'cross')" onclick="addComponentFromPalette('cross')">
+                <svg viewBox="-40 -35 80 70"><path d="M-25,0 L25,0 M0,-25 L0,25" stroke="#fff" stroke-width="3" fill="none"/></svg>
+                <span data-i18n="comp_cross">Kříž / X-Kus</span>
+            </div>
+            <div class="palette-item" data-type="reducer" onmousedown="startPaletteDrag(event, 'reducer')" onclick="addComponentFromPalette('reducer')">
+                <svg viewBox="-40 -35 80 70"><path d="M-30,0 L-10,0 M10,0 L30,0" stroke="#fff" stroke-width="3" fill="none"/><polygon points="-10,-10 -10,10 10,5 10,-5" fill="#00adb5"/></svg>
+                <span data-i18n="comp_reducer">Přechodka / Redukce</span>
+            </div>
+            <div class="palette-item" data-type="union" onmousedown="startPaletteDrag(event, 'union')" onclick="addComponentFromPalette('union')">
+                <svg viewBox="-40 -35 80 70"><path d="M-30,0 L30,0" stroke="#fff" stroke-width="3" fill="none"/><rect x="-3" y="-6" width="6" height="12" fill="#f39c12"/></svg>
+                <span data-i18n="comp_union">Šroubení na trubku</span>
+            </div>
+        </div>
+
+        <!-- SYSTÉMY POTRUBÍ -->
+        <div class="palette-category" data-cat="pipes">
+            <h2 data-i18n="cat_pipes">Materiály Potrubí</h2>
+            <div class="help-text" data-i18n="pipe_help">Klikněte pro vložení trubky do výkresu</div>
+            <div class="pipe-preset-item" onclick="addPipeFromPreset('pexal-32')">
+                <div class="pipe-color-badge" style="background: #e63946;"></div>
+                <div class="pipe-preset-info">
+                    <span class="pipe-preset-title">PEX-AL-PEX 32×3.0</span>
+                    <span class="pipe-preset-sub" data-i18n="pipe_pexal_sub">Vícevrstvá trubka (IVAR / VTP)</span>
+                </div>
+            </div>
+            <div class="pipe-preset-item" onclick="addPipeFromPreset('pexal-20')">
+                <div class="pipe-color-badge" style="background: #457b9d;"></div>
+                <div class="pipe-preset-info">
+                    <span class="pipe-preset-title">PEX-AL-PEX 20×2.0</span>
+                    <span class="pipe-preset-sub" data-i18n="pipe_pexal_sub">Vícevrstvá trubka (IVAR / VTP)</span>
+                </div>
+            </div>
+            <div class="pipe-preset-item" onclick="addPipeFromPreset('cu-28')">
+                <div class="pipe-color-badge" style="background: #d4a373;"></div>
+                <div class="pipe-preset-info">
+                    <span class="pipe-preset-title">Měď Cu 28×1.5 mm</span>
+                    <span class="pipe-preset-sub" data-i18n="pipe_cu_sub">Trubka měděná (Viega / Sanha)</span>
+                </div>
+            </div>
+            <div class="pipe-preset-item" onclick="addPipeFromPreset('ppr-basalt-25')">
+                <div class="pipe-color-badge" style="background: #2a9d8f;"></div>
+                <div class="pipe-preset-info">
+                    <span class="pipe-preset-title">PPR Fiber Basalt 25×3.5</span>
+                    <span class="pipe-preset-sub">Wavin Ekoplastik / FV-Plast</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROSTŘEDNÍ PLÁTNO -->
+    <div id="canvas-container">
+        <div id="canvas-toolbar">
+            <button onclick="clearCanvas()" data-i18n="btn_clear">Vyčistit</button>
+            <button onclick="showBOM()" data-i18n="btn_bom">Kusovník / Rozpočet</button>
+            <button onclick="calculateTotalWaterVolume()" style="background: #2a9d8f;" data-i18n="btn_water_calc">💧 Vypočítat objem vody</button>
+            <button onclick="exportSVG()">Export SVG</button>
+            <button onclick="exportPNG()">Export PNG</button>
+            
+            <!-- PŘEPÍNAČ JAZYKŮ -->
+            <div class="lang-selector">
+                <span style="font-size:12px; color:#aaa; font-weight:bold;">🌐</span>
+                <select id="lang-switch" onchange="switchLanguage(this.value)">
+                    <option value="cs" selected>CZ</option>
+                    <option value="en">EN</option>
+                </select>
+            </div>
+        </div>
+
+        <svg id="canvas">
+            <defs>
+                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" class="grid-pattern"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" style="pointer-events: none;" />
+            <g id="pipes-layer"></g>
+            <g id="components-layer"></g>
+        </svg>
+    </div>
+
+    <!-- PRAVÝ PANEL: VLASTNOSTI -->
+    <div id="properties">
+        <h2 data-i18n="prop_title">Vlastnosti Prvku</h2>
+        
+        <div id="prop-component" style="display: none;">
+            <div class="prop-group">
+                <label data-i18n="label_comp_type">Typ komponenty</label>
+                <input type="text" id="prop-type" readonly style="opacity: 0.6;">
+            </div>
+
+            <!-- POPIS / POZNÁMKA -->
+            <div class="prop-group" id="group-note-text" style="display: none;">
+                <label data-i18n="label_note_text">Text poznámky (lze více řádků)</label>
+                <textarea id="prop-note-text" rows="4" style="background:#1e1e24; color:#fff; border:1px solid #4f4f65; padding:6px; border-radius:4px; font-size:12px;" oninput="updateNoteText()"></textarea>
+            </div>
+
+            <div class="prop-group" id="group-label">
+                <label data-i18n="label_comp_name">Název / Označení v projektu</label>
+                <input type="text" id="prop-label" oninput="updateSelectedComponent()">
+            </div>
+
+            <!-- RADIÁTORY KORADO RADIK PARAMETRY -->
+            <div id="group-korado-radik" style="display: none;" class="prop-group">
+                <label data-i18n="label_radik_type">Typ desky Korado</label>
+                <select id="prop-radik-type" onchange="updateKoradoRadik()">
+                    <option value="11" data-i18n="radik_t11">Typ 11 (Jednodeskový)</option>
+                    <option value="21" data-i18n="radik_t21">Typ 21 (Dvoudeskový úzký)</option>
+                    <option value="22" selected data-i18n="radik_t22">Typ 22 (Dvoudeskový)</option>
+                    <option value="33" data-i18n="radik_t33">Typ 33 (Třídeskový)</option>
+                </select>
+                <div class="prop-row">
+                    <div class="prop-group" style="flex:1;">
+                        <label data-i18n="label_height">Výška [mm]</label>
+                        <select id="prop-radik-height" onchange="updateKoradoRadik()">
+                            <option value="300">300 mm</option>
+                            <option value="400">400 mm</option>
+                            <option value="500">500 mm</option>
+                            <option value="600" selected>600 mm</option>
+                            <option value="900">900 mm</option>
+                        </select>
+                    </div>
+                    <div class="prop-group" style="flex:1;">
+                        <label data-i18n="label_length">Délka [mm]</label>
+                        <input type="number" id="prop-radik-length" step="100" min="400" max="3000" value="1000" oninput="updateKoradoRadik()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- KRB: BEZPEČNOSTNÍ SMYČKA -->
+            <div class="prop-group" id="group-fireplace-safety" style="display: none;">
+                <label data-i18n="label_safety_loop">Bezpečnostní dochlazovací smyčka</label>
+                <select id="prop-fireplace-safety-val" onchange="toggleFireplaceSafetyLoop()">
+                    <option value="yes" data-i18n="safety_loop_yes">Ano (4 vývody)</option>
+                    <option value="no" data-i18n="safety_loop_no">Ne (2 vývody)</option>
+                </select>
+            </div>
+
+            <!-- ROZDĚLOVAČ: POČET PÁRŮ -->
+            <div class="prop-group" id="group-manifold-pairs" style="display: none;">
+                <label data-i18n="label_manifold_pairs">Počet vývodových párů (okruhů)</label>
+                <input type="number" id="prop-manifold-pairs-val" min="1" max="10" value="3" onchange="updateManifoldPairs()">
+            </div>
+
+            <!-- DYNAMICKÉ PARAMETRY -->
+            <div class="prop-group" id="group-water-vol">
+                <label data-i18n="label_water_vol">Objem vody v prvku [Litrů]</label>
+                <input type="number" id="prop-water-vol" step="0.1" min="0" value="0" oninput="updateSelectedComponent()">
+            </div>
+
+            <div class="prop-group" id="group-power" style="display: none;">
+                <label data-i18n="label_power">Jmenovitý výkon [kW]</label>
+                <input type="number" id="prop-power" step="0.5" min="0.5" oninput="updateSelectedComponent()">
+            </div>
+
+            <div class="prop-group">
+                <label data-i18n="label_rotation">Natočení</label>
+                <button onclick="rotateSelectedComponent()" data-i18n="btn_rotate">Otočit o 90° (Klávesa R)</button>
+            </div>
+            
+            <div id="ports-container">
+                <h2 data-i18n="ports_title">Snapovací vývody (Porty)</h2>
+                <div id="ports-list"></div>
+                <button id="btn-add-port" style="display:none; background:#2a9d8f; margin-bottom:10px;" onclick="addPortToSelectedTank()" data-i18n="btn_add_port">+ Přidat nový vývod na nádrž</button>
+            </div>
+
+            <button class="btn-danger" style="margin-top: 10px;" onclick="deleteSelectedComponent()" data-i18n="btn_delete_comp">Smazat komponentu (Del)</button>
+        </div>
+
+        <div id="prop-pipe" style="display: none;">
+            <div class="prop-group">
+                <label data-i18n="label_pipe_desc">Popis větrání / Funkce okruhu</label>
+                <input type="text" id="pipe-label" placeholder="Např. Topná větev TČ -> AKU" oninput="updateSelectedPipe()">
+            </div>
+
+            <div class="prop-group">
+                <label data-i18n="label_pipe_mat">Materiál potrubí</label>
+                <select id="pipe-material" onchange="updateSelectedPipe()">
+                    <option value="Vícevrstvá PEX-AL-PEX">Vícevrstvá PEX-AL-PEX (IVAR.PRESS)</option>
+                    <option value="Měď (Cu)">Měď Cu (Viega / Sanha)</option>
+                    <option value="PPR Fiber Basalt Plus">PPR (Wavin Ekoplastik)</option>
+                    <option value="Uhlíková ocel C-Steel">Uhlíková ocel C-Steel (SanhaTherm)</option>
+                    <option value="Nerezová ocel (AISI 316L)">Nerezová ocel Inox (AISI 316L)</option>
+                    <option value="Polyethylen PE-HD">Polyethylen PE100-RC Vodovod</option>
+                    <option value="Nerezový vlnovec Cats">Nerezový vlnovec Cats (IVAR.CS)</option>
+                    <option value="Odpadní HT / KG">Odpadní HT / KG (OSMA)</option>
+                </select>
+            </div>
+
+            <div class="prop-group">
+                <label data-i18n="label_pipe_dim">Dimenze / Rozměr</label>
+                <select id="pipe-diameter" onchange="updateSelectedPipe()">
+                    <option value="16×2.0">16×2.0 mm (Vnitřní Ø 12 mm)</option>
+                    <option value="18×2.0">18×2.0 mm (Vnitřní Ø 14 mm)</option>
+                    <option value="20×2.0">20×2.0 mm (Vnitřní Ø 16 mm)</option>
+                    <option value="25×3.5">25×3.5 mm (Vnitřní Ø 18 mm)</option>
+                    <option value="26×3.0">26×3.0 mm (Vnitřní Ø 20 mm)</option>
+                    <option value="32×3.0">32×3.0 mm (Vnitřní Ø 26 mm)</option>
+                    <option value="40×3.5">40×3.5 mm (Vnitřní Ø 33 mm)</option>
+                    <option value="50×4.0">50×4.0 mm (Vnitřní Ø 42 mm)</option>
+                    <option value="12×1.0">12×1.0 mm Měď (Vnitřní Ø 10 mm)</option>
+                    <option value="15×1.0">15×1.0 mm Měď/Ocel (Vnitřní Ø 13 mm)</option>
+                    <option value="18×1.0">18×1.0 mm Měď/Ocel (Vnitřní Ø 16 mm)</option>
+                    <option value="22×1.0">22×1.0 mm Měď/Ocel (Vnitřní Ø 20 mm)</option>
+                    <option value="28×1.5">28×1.5 mm Měď/Ocel (Vnitřní Ø 25 mm)</option>
+                    <option value="35×1.5">35×1.5 mm Měď/Ocel (Vnitřní Ø 32 mm)</option>
+                    <option value="42×1.5">42×1.5 mm Měď/Ocel (Vnitřní Ø 39 mm)</option>
+                    <option value="54×2.0">54×2.0 mm Měď/Ocel (Vnitřní Ø 50 mm)</option>
+                    <option value="1/2&quot;">1/2" Cats (DN12 / Ø 12 mm)</option>
+                    <option value="3/4&quot;">3/4" Cats (DN16 / Ø 16 mm)</option>
+                    <option value="1&quot;">1" Cats (DN20 / Ø 20 mm)</option>
+                    <option value="5/4&quot;">5/4" Cats (DN25 / Ø 25 mm)</option>
+                    <option value="DN 40">DN 40 Kanalizace HT (Ø 36 mm)</option>
+                    <option value="DN 50">DN 50 Kanalizace HT (Ø 46 mm)</option>
+                    <option value="DN 75">DN 75 Kanalizace HT (Ø 70 mm)</option>
+                    <option value="DN 110">DN 110 Kanalizace HT/KG (Ø 104 mm)</option>
+                </select>
+            </div>
+
+            <div class="prop-group">
+                <label data-i18n="label_pipe_len">Délka potrubí [m]</label>
+                <input type="number" id="pipe-length" step="0.1" min="0.1" value="1.5" oninput="updateSelectedPipe()">
+            </div>
+
+            <div class="prop-group">
+                <label data-i18n="label_pipe_color">Barva čáry ve výkresu</label>
+                <input type="color" id="pipe-color" onchange="updateSelectedPipe()">
+                <div class="color-presets">
+                    <div class="color-chip" style="background: #e63946;" title="Topná teplá voda" onclick="setPipeColor('#e63946')"></div>
+                    <div class="color-chip" style="background: #457b9d;" title="Vratná voda" onclick="setPipeColor('#457b9d')"></div>
+                    <div class="color-chip" style="background: #d4a373;" title="Krbový okruh" onclick="setPipeColor('#d4a373')"></div>
+                    <div class="color-chip" style="background: #00adb5;" title="Chlazení / Studená" onclick="setPipeColor('#00adb5')"></div>
+                    <div class="color-chip" style="background: #f39c12;" title="TUV" onclick="setPipeColor('#f39c12')"></div>
+                    <div class="color-chip" style="background: #2a9d8f;" title="Vodovod PPR" onclick="setPipeColor('#2a9d8f')"></div>
+                    <div class="color-chip" style="background: #6c757d;" title="Kanalizace" onclick="setPipeColor('#6c757d')"></div>
+                </div>
+            </div>
+
+            <button class="btn-danger" style="margin-top: 15px;" onclick="deleteSelectedPipe()" data-i18n="btn_delete_pipe">Smazat potrubí (Del)</button>
+        </div>
+
+        <div id="prop-empty" style="color: #666; font-size: 13px; text-align: center; margin-top: 20px;" data-i18n="prop_empty">
+            Vyberte prvek nebo trubku kliknutím.
+        </div>
+    </div>
+
+    <!-- MODAL PRO KUSOVNÍK A OBJEM VODY -->
+    <div class="modal-overlay" id="bom-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-title" style="color: #00adb5;">Kusovník a Specifikace Potrubí</h3>
+                <button onclick="closeBOM()" style="background:none; border:none; color:#aaa; font-size:18px; cursor:pointer;">✕</button>
+            </div>
+            <div class="modal-body" id="bom-content"></div>
+            <div class="modal-footer">
+                <button onclick="closeBOM()" data-i18n="btn_close">Zavřít</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SKRIPTY -->
+    <script src="js/schemas.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
